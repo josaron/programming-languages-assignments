@@ -110,7 +110,7 @@ public class ParseRule implements LeftHandSide {
 	/*private LeftHandSide[] findChildRule() {
 		if (ruleOptions.length == 1) {
 			return ruleOptions[0];
-		}
+		}//
 		/*for (int i = 0; i < ruleOptions.length; i++) {
 			if (ruleOptions[i].getValidStartTerminal()) {
 				return ruleOptions[i];

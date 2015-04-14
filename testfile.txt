@@ -1,0 +1,9 @@
+class Move {
+    int home;
+    int go(int home){
+    if(home == 3) home = home + 3;
+    else {
+        home = home + 21;
+    }
+}
+}

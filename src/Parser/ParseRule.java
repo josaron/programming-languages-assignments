@@ -9,76 +9,68 @@ import tokenizer.*;
 public class ParseRule implements LeftHandSide {
 
 	protected LeftHandSide[] rules;
-	private int ruleCount;
 	private String lhsName;
-	private int extendedOption;
+	private int property; // specifies the Ebnf abbreviation
 	
-	public ParseRule(String name, int extendedOption, int i) {
+	public ParseRule(String name, int property) {
 		lhsName = name;
-		this.extendedOption = extendedOption;
-		ruleCount = 0;
+		this.property = property;
 	}
 	
 	public void addRHS(LeftHandSide... rhs) {
 		rules = rhs;
-		ruleCount++;
 	}
 	
 	public boolean parse(DefaultMutableTreeNode parent) {
-		//LeftHandSide[] rules = findChildRule();
-		/*if (ruleOptions.length > 1) {
-			System.out.println("Error finding which rule");
-			return false;
-		}*/
-		
-		//for (int i = 0; i < rules.length; i++) {
-			//LeftHandSide rhs = rules[i];
 		for (LeftHandSide rhs : rules) {
-			
-			if (rhs.getClass() == this.getClass()) { //the RHS is a variable
+			if (isVar(rhs)) { //the RHS is a variable
 				ParseRule rule = (ParseRule) rhs;
-				Token nextTerminalRule = getNextTerminal(rule);
-				
-				if (rule.getExtendedOption() == Globals.NONE) {
+				if (rule.getProperty() == Globals.NONE) {
 					//System.out.println(lhsName);
 					DefaultMutableTreeNode n = new DefaultMutableTreeNode(rule.getName());
 					parent.add(n);
 					if (!rule.parse(n)) return false;
 				}
-				else if (rule.getExtendedOption() == Globals.OPTIONAL) {
+				else if (rule.getProperty() == Globals.OPTIONAL) {
+					Token nextTerminalRule = getNextTerminal(rule);
 					if (Globals.currentToken.getType() == nextTerminalRule.getType()) {
 						DefaultMutableTreeNode n = new DefaultMutableTreeNode(rule.getName());
 						parent.add(n);
 						if (!rule.parse(n)) return false;
 					}
 				}
-				else if (rule.getExtendedOption() == Globals.OPTIONAL_REPETITIONS) {
+				else if (rule.getProperty() == Globals.OPTIONAL_REPETITIONS) {
+					Token nextTerminalRule = getNextTerminal(rule);
 					while (Globals.currentToken.getType() == nextTerminalRule.getType()) {
 						DefaultMutableTreeNode n = new DefaultMutableTreeNode(rule.getName());
 						parent.add(n);
 						if (!rule.parse(n)) return false;
 					}
 				}
-				else if (rule.getExtendedOption() == Globals.ALTERNATIVES) {
-					if (!rule.parse(parent)) return false;
+				else if (rule.getProperty() == Globals.ALTERNATES) {
+					for (LeftHandSide option : rule.rules) {
+						if (option.getClass() != this.getClass()) {
+							Token t = (Token) option;
+							if (t.getType() == Globals.currentToken.getType()) {
+								DefaultMutableTreeNode n = new DefaultMutableTreeNode(t);
+								parent.add(n);
+								Globals.currentToken = Globals.tokenizer.getToken();
+								return true;
+							}
+						}
+						else {
+							ParseRule pr = (ParseRule) option;
+							Token t = getNextTerminal(pr);
+							if (t.getType() == Globals.currentToken.getType()) {
+								DefaultMutableTreeNode n = new DefaultMutableTreeNode(pr.getName());
+								parent.add(n);
+								return pr.parse(n);
+							}
+						}
+					}
+					return false;
 				}
 			}
-			
-			/*else if (rhs.getType() == TokConst.LBRAC_OPTIONAL) { //optional is a possibility
-				rhs = rules[i++];
-				if (GlobalTokenizer.currentToken == nextTerminalRule) { //enter the part of optional
-					//ParseRule nextRule = GlobalTokenizer.rules.get(rules[i++]);
-					do {
-						rhs.parse(parent);
-						rhs = rules[i++];
-					} while (rhs.getType() != TokConst.RBRAC_OPTIONAL);
-				}
-			}
-			else if (rhs.getType() == TokConst.RCURLY_OPTIONAL) { //zero or more repetitions is a possibility
-				while (GlobalTokenizer.currentToken == nextTerminalRule) { //enter a repetition
-					parse(parent);
-				}
-			}*/
 			
 			else { // the LHS is a terminal
 				Token terminalRule = (Token) rhs;
@@ -98,7 +90,7 @@ public class ParseRule implements LeftHandSide {
 	}
 	
 	private Token getNextTerminal(LeftHandSide rhs) {
-		if (rhs.getClass() != this.getClass()) {
+		if (!isVar(rhs)) {
 			return (Token) rhs;
 		}
 		else {
@@ -107,23 +99,15 @@ public class ParseRule implements LeftHandSide {
 		}
 	}
 	
-	/*private LeftHandSide[] findChildRule() {
-		if (ruleOptions.length == 1) {
-			return ruleOptions[0];
-		}//
-		/*for (int i = 0; i < ruleOptions.length; i++) {
-			if (ruleOptions[i].getValidStartTerminal()) {
-				return ruleOptions[i];
-			}
-		}*/
-		/*return new LeftHandSide[0];
-	}*/
-	
 	public String getName() {
 		return lhsName;
 	}
 	
-	public int getExtendedOption() {
-		return extendedOption;
+	public int getProperty() {
+		return property;
+	}
+	
+	private boolean isVar(LeftHandSide rule) {
+		return rule.getClass() == this.getClass();
 	}
 }

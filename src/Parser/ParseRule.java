@@ -22,11 +22,12 @@ public class ParseRule implements LeftHandSide {
 	}
 	
 	public boolean parse(DefaultMutableTreeNode parent) {
+		System.out.println("               lhs: " + lhsName);
 		for (LeftHandSide rhs : rules) {
 			if (isVar(rhs)) { //the RHS is a variable
 				ParseRule rule = (ParseRule) rhs;
 				if (rule.getProperty() == Globals.NONE) {
-					//System.out.println(lhsName);
+					System.out.println(lhsName);
 					DefaultMutableTreeNode n = new DefaultMutableTreeNode(rule.getName());
 					parent.add(n);
 					if (!rule.parse(n)) return false;
@@ -36,6 +37,7 @@ public class ParseRule implements LeftHandSide {
 					if (Globals.currentToken.getType() == nextTerminalRule.getType()) {
 						DefaultMutableTreeNode n = new DefaultMutableTreeNode(rule.getName());
 						parent.add(n);
+						System.out.println(rule.getName());
 						if (!rule.parse(n)) return false;
 					}
 				}
@@ -44,6 +46,7 @@ public class ParseRule implements LeftHandSide {
 					while (Globals.currentToken.getType() == nextTerminalRule.getType()) {
 						DefaultMutableTreeNode n = new DefaultMutableTreeNode(rule.getName());
 						parent.add(n);
+						System.out.println(rule.getName());
 						if (!rule.parse(n)) return false;
 					}
 				}
@@ -55,6 +58,7 @@ public class ParseRule implements LeftHandSide {
 								DefaultMutableTreeNode n = new DefaultMutableTreeNode(t);
 								parent.add(n);
 								Globals.currentToken = Globals.tokenizer.getToken();
+								System.out.println(t.toString());
 								return true;
 							}
 						}
@@ -76,7 +80,7 @@ public class ParseRule implements LeftHandSide {
 				Token terminalRule = (Token) rhs;
 				Token tokenTerminal = (Token) Globals.currentToken;
 				if (tokenTerminal.getType() == terminalRule.getType()) {
-					//System.out.println(tokenTerminal.toString());
+					System.out.println(tokenTerminal.toString());
 					DefaultMutableTreeNode n = new DefaultMutableTreeNode(tokenTerminal);
 					parent.add(n);
 					Globals.currentToken = Globals.tokenizer.getToken();

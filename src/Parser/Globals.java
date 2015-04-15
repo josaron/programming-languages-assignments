@@ -16,5 +16,5 @@ public class Globals {
 	public static final int NONE = 0;
 	public static final int OPTIONAL = 1;
 	public static final int OPTIONAL_REPETITIONS = 2;
-	public static final int ALTERNATIVES = 3;
+	public static final int ALTERNATES = 3;
 }

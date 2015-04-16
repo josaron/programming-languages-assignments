@@ -38,8 +38,12 @@ abstract class JToken implements TokConst {
     }
 
 
-    void ungetToken(Token t) {
+    public void ungetToken(Token t) {
         saved = t;
+        for (int i = t.toString().length() - 1; i>= 0; i--) {
+        	ungetChar(t.toString().charAt(i));
+        }
+        ungetChar(' ');
     }
 
     protected abstract char getChar();

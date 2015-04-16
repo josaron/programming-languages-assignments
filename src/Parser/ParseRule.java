@@ -1,5 +1,6 @@
 package Parser;
 
+import java.util.HashMap;
 import java.util.Iterator;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -11,10 +12,14 @@ public class ParseRule implements LeftHandSide {
 	protected LeftHandSide[] rules;
 	private String lhsName;
 	private int property; // specifies the Ebnf abbreviation
+	private HashMap<String, Integer> symbolTable;
+	private int tableSpot;
 	
 	public ParseRule(String name, int property) {
-		lhsName = name;
+		lhsName = "<" + name + ">";
 		this.property = property;
+		symbolTable = new HashMap<String, Integer>();
+		tableSpot = -1;
 	}
 	
 	public void addRHS(LeftHandSide... rhs) {
@@ -27,7 +32,7 @@ public class ParseRule implements LeftHandSide {
 			if (isVar(rhs)) { //the RHS is a variable
 				ParseRule rule = (ParseRule) rhs;
 				if (rule.getProperty() == Globals.NONE) {
-					System.out.println(lhsName);
+					System.out.println(lhsName + " -> " + rule.lhsName);
 					DefaultMutableTreeNode n = new DefaultMutableTreeNode(rule.getName());
 					parent.add(n);
 					if (!rule.parse(n)) return false;
@@ -37,16 +42,18 @@ public class ParseRule implements LeftHandSide {
 					if (Globals.currentToken.getType() == nextTerminalRule.getType()) {
 						DefaultMutableTreeNode n = new DefaultMutableTreeNode(rule.getName());
 						parent.add(n);
-						System.out.println(rule.getName());
+						System.out.println(lhsName + " -> " + rule.getName());
 						if (!rule.parse(n)) return false;
 					}
 				}
 				else if (rule.getProperty() == Globals.OPTIONAL_REPETITIONS) {
 					Token nextTerminalRule = getNextTerminal(rule);
 					while (Globals.currentToken.getType() == nextTerminalRule.getType()) {
+						if (isMethodOptional(rule)) rule = EBNF.method_optional; // Account for pairwise disjointness is the flawed grammar. This line and helper method should not be here!
+						//System.out.println(Globals.currentToken);
 						DefaultMutableTreeNode n = new DefaultMutableTreeNode(rule.getName());
 						parent.add(n);
-						System.out.println(rule.getName());
+						System.out.println(lhsName + " -> " + rule.getName());
 						if (!rule.parse(n)) return false;
 					}
 				}
@@ -58,7 +65,7 @@ public class ParseRule implements LeftHandSide {
 								DefaultMutableTreeNode n = new DefaultMutableTreeNode(t);
 								parent.add(n);
 								Globals.currentToken = Globals.tokenizer.getToken();
-								System.out.println(t.toString());
+								System.out.println(lhsName + " -> " + t.toString());
 								return true;
 							}
 						}
@@ -80,9 +87,12 @@ public class ParseRule implements LeftHandSide {
 				Token terminalRule = (Token) rhs;
 				Token tokenTerminal = (Token) Globals.currentToken;
 				if (tokenTerminal.getType() == terminalRule.getType()) {
-					System.out.println(tokenTerminal.toString());
+					System.out.println(lhsName + " -> " + tokenTerminal.toString());
 					DefaultMutableTreeNode n = new DefaultMutableTreeNode(tokenTerminal);
 					parent.add(n);
+					if (terminalRule.getType() == TokConst.IDENT) {
+						addSymbol(terminalRule);
+					}
 					Globals.currentToken = Globals.tokenizer.getToken();
 				}
 				else {
@@ -113,5 +123,39 @@ public class ParseRule implements LeftHandSide {
 	
 	private boolean isVar(LeftHandSide rule) {
 		return rule.getClass() == this.getClass();
+	}
+	
+	private void addSymbol(Token t) {
+		if (symbolTable.containsKey(t.toString())) {
+			symbolTable.put(t.toString(), tableSpot++);
+		}
+	}
+	
+	private boolean isMethodOptional(LeftHandSide rhs) {
+		if (isVar(rhs)) {
+			ParseRule rule = (ParseRule) rhs;
+			if (rule.lhsName.equals("<declaration_optional>")) {
+				Token t1 = Globals.tokenizer.getToken();
+				Token t2 = Globals.tokenizer.getToken();
+				Globals.tokenizer.ungetToken(t2);
+				Globals.tokenizer.ungetToken(t1);
+				Token t3 = Globals.tokenizer.getToken();
+				
+				Token t4 = Globals.tokenizer.getToken();
+				//Globals.currentToken = t4;
+				/*Token t5 = Globals.tokenizer.getToken();
+				Token t6 = Globals.tokenizer.getToken();
+				Token t7 = Globals.tokenizer.getToken();
+				Token t8 = Globals.tokenizer.getToken();*/
+				if (t2.getType() == TokConst.LPAR) {
+					return true;
+				}
+			}
+			else {
+				rule = (ParseRule) rhs;
+				return isMethodOptional(rule.rules[0]);
+			}
+		}
+		return false;
 	}
 }

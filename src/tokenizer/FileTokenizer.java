@@ -19,7 +19,7 @@ public class FileTokenizer extends JToken {
         super();
         NoMoreData = false;
         try {
-            fp = new PushbackInputStream(new FileInputStream(p));
+            fp = new PushbackInputStream(new FileInputStream(p), 8);
         } catch (IOException e) {
             System.err.println("Can't open " + e.toString());
             System.exit(1);

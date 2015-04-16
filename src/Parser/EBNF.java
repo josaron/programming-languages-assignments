@@ -6,6 +6,9 @@ import tokenizer.TokConst;
 import tokenizer.Token;
 
 public class EBNF {
+	
+	public static ParseRule method_optional;
+	
 	public static ParseRule createGrammar() {
 		// Create all the LHSs
 		ParseRule program = new ParseRule("program", Globals.NONE);
@@ -13,7 +16,7 @@ public class EBNF {
 		ParseRule class_optional = new ParseRule("class_optional", Globals.OPTIONAL_REPETITIONS);
 		ParseRule classbody = new ParseRule("classbody", Globals.NONE);
 		ParseRule method = new ParseRule("method", Globals.NONE);
-		ParseRule method_optional = new ParseRule("method_optional", Globals.OPTIONAL_REPETITIONS);
+		method_optional = new ParseRule("method_optional", Globals.OPTIONAL_REPETITIONS);
 		ParseRule header = new ParseRule("header", Globals.NONE);
 		ParseRule parmlist = new ParseRule("parmlist", Globals.OPTIONAL);
 		ParseRule commaparmlist = new ParseRule("commaparmlist", Globals.OPTIONAL_REPETITIONS);
